@@ -46,9 +46,9 @@ export const sac = new SACClient({
 
 export const native = sac.getSACClient('CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC');
 
-export const ousd = sac.getSACClient('CCIL2PEJSWL3VYFAJMQSY4BG2UEQ7GHTGAV5YKYNNDOTXQXLPTTBJJWW');
+export const ousd = sac.getSACClient('CAKPNXVP2W7IL3MYK46Q7O66EAT7Z2IGRAAQFY4SBRBD4U3OYQPHQLJ5');
 
-export const slp = sac.getSACClient('CC2OSY3A6DIMOTGO52IDVNXGKUTD6P32BD2U7XAOJCUVX7RQH7XTI4YE');
+export const slp = sac.getSACClient('CAZOKAXOSNYQOZ77OVCIMZB3LH5LFLJSV2KT2G75ECL2TA4CK3PDKVS2');
 
 export const send_transaction = async (xdr: string, fee = 10_000) => {
   const submittingToast = toast.info('Submitting transaction...', {
@@ -120,19 +120,19 @@ export const send_transaction = async (xdr: string, fee = 10_000) => {
 };
 
 export const pool = new PoolClient({
-  contractId: 'CBQKHHTKPQXJXVJ6YZOWMDE2KOPS5276U7GJEAPFIC4JLNJQJ7YAJ2AD',
+  contractId: 'CDW2GCMKEB4XML7JKLNDWQ5TBRVAG5P4LZUCTT6AXV6WHAPAXIXJYZ3T',
   networkPassphrase: 'Test SDF Network ; September 2015',
   rpcUrl: 'https://soroban-testnet.stellar.org',
 });
 
 export const positionManager = new PositionManagerClient({
-  contractId: 'CCOULAQ3CWLVLWTFJHJL45UKAKMTRUCE2VT3RPVODPQIBDHODOKUF6HG',
+  contractId: 'CAG4BDVJGWWOVG7D4VKGXCU6TR33ZLUBPVEY2WJV3T7DSZHWWQ7Z5ODW',
   networkPassphrase: 'Test SDF Network ; September 2015',
   rpcUrl: 'https://soroban-testnet.stellar.org',
 });
 
 export const oracle = new OracleClient({
-  contractId: 'CBK7SQLNMPIHNUWROKZKDQ3JZ5F3RKUH5TM4K6KGZSZIHZ7OSWVHGMPN',
+  contractId: 'CAAJ7F7ELXH6K5JY77AN6NCSUECBG3PBBPSDTXLDMOOOOOMTNVARF75I',
   networkPassphrase: 'Test SDF Network ; September 2015',
   rpcUrl: 'https://soroban-testnet.stellar.org',
 });

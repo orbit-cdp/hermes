@@ -207,7 +207,7 @@ export const fundWallet = createAsyncThunk('wallet/fund', async (_, { getState }
   const { built, ...transfer } = await native.transfer({
     to: contractId!,
     from: fundPubkey,
-    amount: BigInt(1000 * SCALAR_7),
+    amount: BigInt(5000 * SCALAR_7),
   });
 
   await transfer.signAuthEntries({

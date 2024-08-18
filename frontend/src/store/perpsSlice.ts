@@ -73,7 +73,7 @@ export const fetchTokenData = createAsyncThunk(
         const client = symbol == 'USD' ? ousd : native;
 
         const balanceResult = await client.balance({
-          id: 'CBQKHHTKPQXJXVJ6YZOWMDE2KOPS5276U7GJEAPFIC4JLNJQJ7YAJ2AD',
+          id: 'CDW2GCMKEB4XML7JKLNDWQ5TBRVAG5P4LZUCTT6AXV6WHAPAXIXJYZ3T',
         });
         const balance = Number(balanceResult) / SCALAR_7;
 
@@ -112,7 +112,7 @@ export const fetchTokenData = createAsyncThunk(
 );
 
 export const startPeriodicRefresh = () => (dispatch: AppDispatch) => {
-  const refreshInterval = 30000; // 30 seconds
+  const refreshInterval = 5000; // 30 seconds
 
   const refresh = () => {
     dispatch(fetchTokenData());

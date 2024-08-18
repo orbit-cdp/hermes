@@ -97,6 +97,7 @@ const WalletBanner: React.FC = () => {
   const copyAddress = useCallback(() => {
     if (contractId) {
       navigator.clipboard.writeText(contractId);
+      dispatch(getWalletBalance());
       // You might want to add a snackbar or toast notification here
     }
   }, [contractId]);

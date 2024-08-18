@@ -78,7 +78,7 @@ export const fetchPosition = createAsyncThunk(
 );
 
 export const startPeriodicPositionRefresh = (userId: string) => (dispatch: AppDispatch) => {
-  const refreshInterval = 30000; // 30 seconds
+  const refreshInterval = 5000; // 5 seconds
 
   const refresh = () => {
     dispatch(fetchPosition(userId));
