@@ -1,0 +1,28 @@
+{
+  "name": "perpetuals-futures-utils",
+  "version": "1.0.0",
+  "description": "Deployment & Managment of the perpetuals futures hackathon project",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Robeart",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/inquirer": "^9.0.7",
+    "@types/node": "^20.8.2",
+    "@typescript-eslint/eslint-plugin": "^5.59.0",
+    "@typescript-eslint/parser": "^5.59.0",
+    "eslint": "^8.38.0",
+    "eslint-config-prettier": "^8.8.0",
+    "eslint-plugin-prettier": "^4.2.1",
+    "prettier": "^2.8.7",
+    "typescript": "^5.0.4"
+  },
+  "dependencies": {
+    "@stellar/stellar-sdk": "^12.2.0",
+    "dotenv": "^16.4.5",
+    "inquirer": "^10.1.8",
+    "typescript": "^5.5.4"
+  }
+}

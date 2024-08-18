@@ -1,0 +1,24 @@
+[package]
+name = "pool"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib"]
+doctest = false
+
+[features]
+testutils = [
+    "soroban-sdk/testutils",
+]
+
+[dependencies]
+soroban-sdk = { workspace = true }
+soroban-fixed-point-math = { workspace = true }
+sep-40-oracle = { workspace = true }
+sep-41-token = { workspace = true }
+
+[dev_dependencies]
+soroban-sdk = { workspace = true, features = ["testutils"] }
+sep-40-oracle = { workspace = true, features = ["testutils"] }
+sep-41-token = { workspace = true, features = ["testutils"] }
