@@ -128,7 +128,7 @@ fn test_unbalanced_deposit() {
 }
 
 #[test]
-fn test_unbalanced_deposit2() {
+fn test_balanced_deposit() {
     let fixture = create_fixture_with_data();
     let henk = Address::generate(&fixture.env);
 
@@ -138,6 +138,25 @@ fn test_unbalanced_deposit2() {
 
     // Initial deposit
     fixture.pool.deposit(&henk, &(1_000 * SCALAR_7), &(10_000 * SCALAR_7));
+}
 
+#[test]
+fn testing() {
+    let fixture = create_fixture_with_data();
+    let ben = Address::generate(&fixture.env);
 
+    fixture.tokens[TokenIndex::XLM].mint(&ben, &(10_000 * SCALAR_7));
+
+    fixture.position_manager.open_position(&ben, &(1_000 * SCALAR_7), &20000000, &fixture.tokens[TokenIndex::XLM].address);
+
+    let position = fixture.position_manager.get_position(&ben);
+    println!("Position: {:?}", position);
+
+    // we supply 1000 XLM fee of 0.1% is charged
+    // 1000 * 0.001 = 1 XLM fee so collateral should be 999 XLM
+    assert_eq!(position.collateral, 999 * SCALAR_7);
+
+    fixture.position_manager.close_position(&ben);
+
+    println!("Balance of ben {:?}", fixture.tokens[TokenIndex::XLM].balance(&ben));
 }

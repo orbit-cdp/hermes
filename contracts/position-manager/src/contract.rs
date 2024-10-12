@@ -84,8 +84,8 @@ impl PositionManager for PositionManagerContract {
         }
 
         // Calculate fee and remaining collateral
-        let collateral = input; // multiply to get the actual value minus opening fee
-        let fee = input - collateral;
+        let fee =  input.fixed_mul_ceil(&env, &10000, &SCALAR_7); // 0.1% fee
+        let collateral = input - fee; // multiply to get the actual value minus opening fee
 
         // Create the position
         let oracle = storage::get_oracle(&env);
@@ -109,7 +109,7 @@ impl PositionManager for PositionManagerContract {
 
         // Transfer the collateral to the position manager
         let token_client = TokenClient::new(&env, &token);
-        token_client.transfer(&user, &env.current_contract_address(), &collateral);
+        token_client.transfer(&user, &env.current_contract_address(), &input);
 
         // Borrow the token from the pool
         let pool_contract = storage::get_pool_contract(&env);
@@ -176,6 +176,8 @@ impl PositionManager for PositionManagerContract {
             }),
         ]);
         pool_client.repay(&position.token, &to_repay, &0);
+
+        //
 
         // Transfer rest of position back
         let to_repay_user = total_position - to_repay;
