@@ -6,7 +6,7 @@ export * as rpc from '@stellar/stellar-sdk/rpc';
 export declare const networks: {
     readonly testnet: {
         readonly networkPassphrase: "Test SDF Network ; September 2015";
-        readonly contractId: "CDDMX3D5VTA7KSUTRI4QX7UCXEM3JU2GCAPBJ35MBKOQF55OFV2CPKMO";
+        readonly contractId: "CDNSFAFYK67YEWGJ7P4UGHMDFQTQ3JXB7VF6JLPJWUZLOMW6QEBTCHWZ";
     };
 };
 export type DataKey = {
@@ -14,6 +14,12 @@ export type DataKey = {
     values: void;
 } | {
     tag: "PoolContract";
+    values: void;
+} | {
+    tag: "TokenA";
+    values: void;
+} | {
+    tag: "TokenB";
     values: void;
 } | {
     tag: "Position";
@@ -76,9 +82,11 @@ export interface Client {
     /**
      * Construct and simulate a initialize transaction. Returns an `AssembledTransaction` object which will have a `result` field containing the result of the simulation. If this transaction changes contract state, you will need to call `signAndSend()` on the returned object.
      */
-    initialize: ({ pool_contract, oracle }: {
+    initialize: ({ pool_contract, oracle, token_a, token_b }: {
         pool_contract: string;
         oracle: string;
+        token_a: string;
+        token_b: string;
     }, options?: {
         /**
          * The fee to pay for the transaction. Default: BASE_FEE

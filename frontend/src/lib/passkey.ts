@@ -36,7 +36,7 @@ export const fundSigner = basicNodeSigner(await fundKeypair, 'Test SDF Network ;
 export const account = new PasskeyKit({
   rpcUrl: 'https://soroban-testnet.stellar.org',
   networkPassphrase: 'Test SDF Network ; September 2015',
-  factoryContractId: 'CDKAGY7RBMIUDFZEUNZDQG4LGAJOMQP42NYNBZF5ZT5AAILO7GUALQBY',
+  factoryContractId: 'CBRKYZBFLZHZI6HTLLYZ3EOAFIE6GBSDFQLNU5F3NKOX2NOFUKEPIBUS',
 });
 
 export const sac = new SACClient({
@@ -46,9 +46,9 @@ export const sac = new SACClient({
 
 export const native = sac.getSACClient('CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC');
 
-export const ousd = sac.getSACClient('CAKPNXVP2W7IL3MYK46Q7O66EAT7Z2IGRAAQFY4SBRBD4U3OYQPHQLJ5');
+export const ousd = sac.getSACClient('CAE67UQKK2WLYIDB6H4LTW7KMYYDGHZFVWVFWUBK4U5BIXWLEYXM4IUA');
 
-export const slp = sac.getSACClient('CAZOKAXOSNYQOZ77OVCIMZB3LH5LFLJSV2KT2G75ECL2TA4CK3PDKVS2');
+export const slp = sac.getSACClient('CAZ4AQYC3W2CDEBA7RFVVFL53KKTQ6FZ6KS6SNX2L776J5LYYM2U32S2');
 
 export const send_transaction = async (xdr: string, fee = 10_000) => {
   const submittingToast = toast.info('Submitting transaction...', {
@@ -120,19 +120,19 @@ export const send_transaction = async (xdr: string, fee = 10_000) => {
 };
 
 export const pool = new PoolClient({
-  contractId: 'CDW2GCMKEB4XML7JKLNDWQ5TBRVAG5P4LZUCTT6AXV6WHAPAXIXJYZ3T',
+  contractId: 'CDDKCDVXEAES2CICDHLUJAGPTOLHND4OYYQRLV4YMUSY65XYOVGHSXQK',
   networkPassphrase: 'Test SDF Network ; September 2015',
   rpcUrl: 'https://soroban-testnet.stellar.org',
 });
 
 export const positionManager = new PositionManagerClient({
-  contractId: 'CAG4BDVJGWWOVG7D4VKGXCU6TR33ZLUBPVEY2WJV3T7DSZHWWQ7Z5ODW',
+  contractId: 'CDNSFAFYK67YEWGJ7P4UGHMDFQTQ3JXB7VF6JLPJWUZLOMW6QEBTCHWZ',
   networkPassphrase: 'Test SDF Network ; September 2015',
   rpcUrl: 'https://soroban-testnet.stellar.org',
 });
 
 export const oracle = new OracleClient({
-  contractId: 'CAAJ7F7ELXH6K5JY77AN6NCSUECBG3PBBPSDTXLDMOOOOOMTNVARF75I',
+  contractId: 'CDIIDS3LAMDTBUO6I5HK5J4CWF4H7MA3BY4SIJDAFTHLSLQ5OTBAPHJQ',
   networkPassphrase: 'Test SDF Network ; September 2015',
   rpcUrl: 'https://soroban-testnet.stellar.org',
 });

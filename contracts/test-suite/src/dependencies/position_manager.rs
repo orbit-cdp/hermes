@@ -1,7 +1,7 @@
 use soroban_sdk::{testutils::Address as _, Address, Env};
 
 mod pool_contract {
-    soroban_sdk::contractimport!(file = "../wasms2/position_manager.wasm");
+    soroban_sdk::contractimport!(file = "../wasms/position_manager.wasm");
 }
 
 pub use pool_contract::{Client as PositionManagerClient, WASM as POSITION_MANAGER_WASM};
