@@ -86,17 +86,17 @@ impl TestFixture<'_> {
         slp_client.set_admin(&pool_id);
 
         let token_a = TokenInfo {
-            address: usdc_id,
+            address: usdc_id.clone(),
             target_ratio: (SCALAR_7 / 2) as u32,
             total_supply: 0,
         };
         let token_b = TokenInfo {
-            address: xlm_id,
+            address: xlm_id.clone(),
             target_ratio: (SCALAR_7 / 2) as u32,
             total_supply: 0,
         };
         pool_client.initialize(&admin, &mock_oracle_id, &position_manager_id, &slp_id, &token_a, &token_b);
-        position_manager_client.initialize(&pool_id, &mock_oracle_id);
+        position_manager_client.initialize(&pool_id, &mock_oracle_id, &usdc_id, &xlm_id);
 
         let fixture = TestFixture {
             env,

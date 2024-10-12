@@ -128,7 +128,7 @@ fn test_unbalanced_deposit() {
 }
 
 #[test]
-fn test_unbalanced_deposit() {
+fn test_unbalanced_deposit2() {
     let fixture = create_fixture_with_data();
     let henk = Address::generate(&fixture.env);
 
