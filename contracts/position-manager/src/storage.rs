@@ -1,3 +1,4 @@
+use core::iter::TakeWhile;
 use soroban_sdk::{contracttype, Address, Env};
 use soroban_sdk::unwrap::UnwrapOptimized;
 
@@ -19,10 +20,14 @@ pub enum DataKey {
 #[derive(Clone)]
 #[contracttype]
 pub struct Position {
+    pub filled: bool,
     pub token: Address,
     pub entry_price: i128,
+    pub stop_loss: i128,
+    pub take_profit: i128,
     pub borrowed: i128,
     pub collateral: i128,
+    pub leverage: u32,
     pub timestamp: u64,
 }
 

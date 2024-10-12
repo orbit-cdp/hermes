@@ -26,6 +26,10 @@ pub enum PositionManagerError {
     // Token transfer errors
     TokenTransferFailed = 609,
 
+    PositionAlreadyFilled = 610,
+
+    PositionNotFilled = 611,
+
     // General errors
     InvalidInput = 10,
 }

@@ -1,13 +1,12 @@
-use sep_40_oracle::{Asset, PriceFeedClient};
 use soroban_sdk::{contract, contractimpl, Address, Env, Symbol, contractclient, panic_with_error, IntoVal, vec, Vec, Val};
 use soroban_sdk::token::TokenClient;
 use soroban_sdk::unwrap::UnwrapOptimized;
-use crate::constants::SCALAR_7;
-use crate::{oracle, storage};
+use crate::constants::{MAX_LEVERAGE, SCALAR_7};
+use crate::{oracle, position, storage};
 use crate::storage::Position;
 use crate::dependencies::pool::Client as PoolClient;
 use crate::errors::PositionManagerError;
-use soroban_fixed_point_math::SorobanFixedPoint;
+use soroban_fixed_point_math::{SorobanFixedPoint};
 use soroban_sdk::auth::{ContractContext, InvokerContractAuthEntry, SubContractInvocation};
 
 #[contract]
@@ -30,6 +29,22 @@ pub trait PositionManager {
     /// * `size` - The size of the position
     /// * `token` - The address of the token to borrow
     fn open_position(env: Env, user: Address, collateral: i128, size: u32, token: Address);
+
+    /// Open a new limit position for a user
+    ///
+    /// # Arguments
+    /// * `user` - The address of the user opening the position
+    /// * `collateral` - The amount of collateral to deposit
+    /// * `size` - The size of the position
+    /// * `token` - The address of the token to borrow
+    /// * `entry_price` - The price at which the position should be opened
+    fn open_limit_position(env: Env, user: Address, collateral: i128, size: u32, token: Address, entry_price: i128);
+
+    fn fill_position(env: Env, user: Address, fee_taker: Address);
+
+    fn add_stop_loss(env: Env, user: Address, stop_loss: i128);
+
+    fn add_take_profit(env: Env, user: Address, take_profit: i128);
 
     /// Closes an existing position for a user
     ///
@@ -83,111 +98,197 @@ impl PositionManager for PositionManagerContract {
             panic_with_error!(&env, PositionManagerError::PositionAlreadyExists);
         }
 
-        // Calculate fee and remaining collateral
-        let fee =  input.fixed_mul_ceil(&env, &10000, &SCALAR_7); // 0.1% fee
-        let collateral = input - fee; // multiply to get the actual value minus opening fee
-
         // Create the position
         let oracle = storage::get_oracle(&env);
+        let entry_price = oracle::load_relative_price(&env, oracle.clone(), token.clone());
 
-        let token_a = storage::get_token_a(&env);
-        let token_b = storage::get_token_b(&env);
-        let other_token = if token == token_a { token_b } else { token_a };
-        let token_price = oracle::load_price(&env, oracle.clone(), token.clone());
-        let other_token_price = oracle::load_price(&env, oracle.clone(), other_token.clone());
-        let entry_price = token_price.fixed_div_floor(&env, &other_token_price, &SCALAR_7);
-
-
-        let to_borrow = collateral.fixed_mul_floor(&env, &(size as i128), &SCALAR_7);
+        let to_borrow = input.fixed_mul_floor(&env, &(size as i128), &SCALAR_7);
+        let fee = position::calculate_impact_fee(&env, to_borrow, entry_price);
         let position = Position {
+            filled: true,
             token: token.clone(),
+            stop_loss: 0,
+            take_profit: 0,
             entry_price,
             borrowed: to_borrow,
-            collateral,
+            leverage: size,
+            collateral: input,
             timestamp: env.ledger().timestamp(),
         };
 
         // Transfer the collateral to the position manager
         let token_client = TokenClient::new(&env, &token);
-        token_client.transfer(&user, &env.current_contract_address(), &input);
+        token_client.transfer(&user, &env.current_contract_address(), &(input + fee));
 
         // Borrow the token from the pool
         let pool_contract = storage::get_pool_contract(&env);
         let pool_client = PoolClient::new(&env, &pool_contract);
 
-        //token_client.approve(&env.current_contract_address(), &pool_contract, &fee, &(env.ledger().sequence() + 1));
-        pool_client.borrow(&token, &to_borrow, &fee);
-
-        // Save the users position
-        storage::set_position(&env, &user, &position);
-    }
-
-    fn close_position(env: Env, user: Address) {
-        storage::extend_instance(&env);
-
-        //User must authenticate the closing of a position
-        user.require_auth();
-
-        // Check if the user has a position
-        if !storage::has_position(&env, &user) {
-            panic_with_error!(&env, PositionManagerError::NoPositionExists);
-        }
-
-        let position = storage::get_position(&env, &user);
-
-        // Calculate the amount to repay
-        let total_position = position.borrowed + position.collateral;
-        let borrowed_value = position.borrowed.fixed_mul_floor(&env, &position.entry_price, &SCALAR_7);
-
-        let token_a = storage::get_token_a(&env);
-        let token_b = storage::get_token_b(&env);
-        let token = position.token.clone();
-        let other_token = if token == token_a { token_b } else { token_a };
-        let oracle = storage::get_oracle(&env);
-
-
-        let token_price = oracle::load_price(&env, oracle.clone(), token.clone());
-        let other_token_price = oracle::load_price(&env, oracle.clone(), other_token.clone());
-        let current_price = token_price.fixed_div_floor(&env, &other_token_price, &SCALAR_7);
-
-        let mut to_repay = borrowed_value.fixed_div_floor(&env, &current_price, &SCALAR_7);
-
-        let mut to_repay_user = total_position - to_repay;
-        let fee = to_repay_user.fixed_mul_ceil(&env, &10000, &SCALAR_7);
-        to_repay_user -= fee;
-        to_repay += fee;
-        //TODO: Check if position is not negative
-
-        // Repay the borrowed amount
-        let pool_contract = storage::get_pool_contract(&env);
-        let pool_client = PoolClient::new(&env, &pool_contract);
-        let token_client = TokenClient::new(&env, &position.token);
-
         let args: Vec<Val> = vec![
             &env,
             (env.current_contract_address()).into_val(&env),
             pool_contract.into_val(&env),
-            to_repay.into_val(&env),
+            fee.into_val(&env),
         ];
         env.authorize_as_current_contract(vec![
             &env,
             InvokerContractAuthEntry::Contract(SubContractInvocation {
                 context: ContractContext {
-                    contract: position.token.clone(),
+                    contract: token.clone(),
                     fn_name: Symbol::new(&env, "transfer"),
                     args: args.clone(),
                 },
                 sub_invocations: vec![&env],
             }),
         ]);
-        pool_client.repay(&position.token, &to_repay, &0);
+        pool_client.borrow(&token, &to_borrow, &fee);
 
-        //
+        storage::set_position(&env, &user, &position);
+    }
 
-        // Transfer rest of position back
-        token_client.transfer(&env.current_contract_address(), &user, &to_repay_user);
+    fn open_limit_position(env: Env, user: Address, input: i128, size: u32, token: Address, entry_price: i128) {
+        storage::extend_instance(&env);
 
-        storage::remove_position(&env, &user);
+        //User must authenticate the opening of a position
+        user.require_auth();
+
+        // Only 1 position per user
+        if storage::has_position(&env, &user) {
+            panic_with_error!(&env, PositionManagerError::PositionAlreadyExists);
+        }
+
+        let position = Position {
+            filled: false,
+            token: token.clone(),
+            stop_loss: 0,
+            take_profit: 0,
+            entry_price,
+            borrowed: 0,
+            leverage: size,
+            collateral: input,
+            timestamp: env.ledger().timestamp(),
+        };
+
+        let to_borrow = input.fixed_mul_floor(&env, &(size as i128), &SCALAR_7);
+        let fee = position::calculate_impact_fee(&env, to_borrow, entry_price);
+        let token_client = TokenClient::new(&env, &token);
+        token_client.transfer(&user, &env.current_contract_address(), &(input + fee));
+
+        storage::set_position(&env, &user, &position);
+    }
+
+    fn add_stop_loss(env: Env, user: Address, stop_loss: i128) {
+        storage::extend_instance(&env);
+
+        user.require_auth();
+
+        if !storage::has_position(&env, &user) {
+            panic_with_error!(&env, PositionManagerError::NoPositionExists);
+        }
+
+        let mut position = storage::get_position(&env, &user);
+        position.stop_loss = stop_loss;
+
+        storage::set_position(&env, &user, &position);
+    }
+
+    fn add_take_profit(env: Env, user: Address, take_profit: i128) {
+        storage::extend_instance(&env);
+
+        user.require_auth();
+
+        if !storage::has_position(&env, &user) {
+            panic_with_error!(&env, PositionManagerError::NoPositionExists);
+        }
+
+        let mut position = storage::get_position(&env, &user);
+        position.take_profit = take_profit;
+
+        storage::set_position(&env, &user, &position);
+    }
+
+    fn fill_position(env: Env, user: Address, fee_taker: Address) {
+        //TODO: Reward user calling part of the fee
+        storage::extend_instance(&env);
+
+        if !storage::has_position(&env, &user) {
+            panic_with_error!(&env, PositionManagerError::NoPositionExists);
+        }
+
+        let position = storage::get_position(&env, &user);
+        let token = position.token.clone();
+        let oracle = storage::get_oracle(&env);
+        let current_price = oracle::load_relative_price(&env, oracle.clone(), token.clone());
+
+        if position.filled {
+            if (position.take_profit != 0 && current_price >= position.take_profit) || (position.stop_loss != 0 && current_price <= position.stop_loss) {
+                let total_position = position.borrowed + position.collateral;
+                let (to_repay, fee) = position::calculate_repay_and_fee(&env, position.clone());
+                let to_repay_user = total_position - to_repay - fee;
+
+                position::repay(&env, token, user, to_repay_user, to_repay, fee);
+            }
+        } else {
+            if position.entry_price < current_price {
+                panic_with_error!(&env, PositionManagerError::PositionNotFilled);
+            }
+
+            let to_borrow = position.collateral.fixed_mul_floor(&env, &(position.leverage as i128), &SCALAR_7);
+            let fee = position::calculate_impact_fee(&env, to_borrow, position.entry_price);
+            let new_position = Position {
+                filled: true,
+                token: position.token.clone(),
+                stop_loss: position.stop_loss,
+                take_profit: position.take_profit,
+                entry_price: current_price,
+                borrowed: to_borrow,
+                leverage: position.leverage,
+                collateral: position.collateral,
+                timestamp: env.ledger().timestamp(),
+            };
+
+            let pool_contract = storage::get_pool_contract(&env);
+            let pool_client = PoolClient::new(&env, &pool_contract);
+
+            let args: Vec<Val> = vec![
+                &env,
+                (env.current_contract_address()).into_val(&env),
+                pool_contract.into_val(&env),
+                fee.into_val(&env),
+            ];
+            env.authorize_as_current_contract(vec![
+                &env,
+                InvokerContractAuthEntry::Contract(SubContractInvocation {
+                    context: ContractContext {
+                        contract: token.clone(),
+                        fn_name: Symbol::new(&env, "transfer"),
+                        args: args.clone(),
+                    },
+                    sub_invocations: vec![&env],
+                }),
+            ]);
+            pool_client.borrow(&token, &to_borrow, &fee);
+
+            storage::set_position(&env, &user, &new_position);
+        }
+    }
+
+    fn close_position(env: Env, user: Address) {
+        storage::extend_instance(&env);
+
+        user.require_auth();
+
+        if !storage::has_position(&env, &user) {
+            panic_with_error!(&env, PositionManagerError::NoPositionExists);
+        }
+
+        let position = storage::get_position(&env, &user);
+
+        let total_position = position.borrowed + position.collateral;
+        let (to_repay, fee) = position::calculate_repay_and_fee(&env, position.clone());
+        let to_repay_user = total_position - to_repay - fee;
+
+        position::repay(&env, position.token.clone(), user, to_repay_user, to_repay, fee);
     }
 
     fn liquidate(env: Env, user: Address, liquidator: Address) {
@@ -199,31 +300,22 @@ impl PositionManager for PositionManagerContract {
 
         let position = storage::get_position(&env, &user);
 
-        //TODO: Calculate fee based on timestamp and substract from collateral
+        let current_price = oracle::load_relative_price(&env, storage::get_oracle(&env), position.token.clone());
+        let borrowed_value = position.borrowed.fixed_mul_floor(&env, &current_price, &SCALAR_7);
+        let collateral_value = position.collateral.fixed_mul_floor(&env, &current_price, &SCALAR_7);
+        let (to_repay, fee) = position::calculate_repay_and_fee(&env, position.clone());
 
-        let total_position = position.borrowed + position.collateral;
-        let margin_ratio = position.borrowed.fixed_div_floor(&env, &total_position, &SCALAR_7);
-        let one_minus_margin_ratio = SCALAR_7.checked_sub(margin_ratio).unwrap_optimized();
-        let liquidation_price = position.entry_price.fixed_mul_floor(&env, &one_minus_margin_ratio, &SCALAR_7);
+        let size_ratio = borrowed_value.fixed_div_floor(&env, &MAX_LEVERAGE, &SCALAR_7);
+        let mut liquidation_premium = collateral_value - fee - size_ratio;
+        liquidation_premium = liquidation_premium.fixed_mul_floor(&env, &current_price, &SCALAR_7);
+        liquidation_premium = liquidation_premium.fixed_div_floor(&env, &position.borrowed, &SCALAR_7);
 
-        // Actual liquidation price is 1% higher than the liquidation price
-        let actual_liquidation_price = liquidation_price.checked_mul(1_010_0000).unwrap_optimized();
+        let liquidation_price = position.entry_price + liquidation_premium;
 
-        let oracle = storage::get_oracle(&env);
-        let token_a = storage::get_token_a(&env);
-        let token_b = storage::get_token_b(&env);
-        let token = position.token.clone();
-        let other_token = if token == token_a { token_b } else { token_a };
-
-        let token_price = oracle::load_price(&env, oracle.clone(), token.clone());
-        let other_token_price = oracle::load_price(&env, oracle.clone(), other_token.clone());
-        let current_price = token_price.fixed_div_floor(&env, &other_token_price, &SCALAR_7);
-
-        // Liquidation login
-        if current_price <= actual_liquidation_price {
+        if current_price <= liquidation_price {
             let borrowed_value = position.borrowed.fixed_mul_floor(&env, &position.entry_price, &SCALAR_7);
             let to_repay = borrowed_value.fixed_div_floor(&env, &current_price, &SCALAR_7);
-            let liquidation_fee = total_position - to_repay;
+            let liquidation_fee = position.borrowed + position.collateral - to_repay;
 
             // Liquidate the position
             let pool_contract = storage::get_pool_contract(&env);
@@ -234,7 +326,7 @@ impl PositionManager for PositionManagerContract {
                 &env,
                 (env.current_contract_address()).into_val(&env),
                 pool_contract.into_val(&env),
-                to_repay.into_val(&env),
+                (to_repay + liquidation_fee).into_val(&env),
             ];
             env.authorize_as_current_contract(vec![
                 &env,
@@ -247,10 +339,7 @@ impl PositionManager for PositionManagerContract {
                     sub_invocations: vec![&env],
                 }),
             ]);
-            pool_client.repay(&position.token, &to_repay, &0);
-
-            // Transfer the liquidation fee to the liquidator
-            token_client.transfer(&env.current_contract_address(), &liquidator, &liquidation_fee);
+            pool_client.repay(&position.token, &to_repay, &liquidation_fee);
 
             // Remove the position
             storage::remove_position(&env, &user);

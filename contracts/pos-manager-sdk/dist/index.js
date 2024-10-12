@@ -1,0 +1,59 @@
+import { Buffer } from "buffer";
+import { Client as ContractClient, Spec as ContractSpec, } from '@stellar/stellar-sdk/contract';
+export * from '@stellar/stellar-sdk';
+export * as contract from '@stellar/stellar-sdk/contract';
+export * as rpc from '@stellar/stellar-sdk/rpc';
+if (typeof window !== 'undefined') {
+    //@ts-ignore Buffer exists
+    window.Buffer = window.Buffer || Buffer;
+}
+export const networks = {
+    testnet: {
+        networkPassphrase: "Test SDF Network ; September 2015",
+        contractId: "CAKLUDFPCNKR2ABGM5FIQMFJBMYZPUKDN5TX4EAOBPZNA4GOVRR5K3VG",
+    }
+};
+export const Errors = {
+    601: { message: "AlreadyInitialized" },
+    602: { message: "PositionAlreadyExists" },
+    603: { message: "NoPositionExists" },
+    604: { message: "StalePriceData" },
+    605: { message: "PositionNotLiquidatable" },
+    607: { message: "OverflowError" },
+    608: { message: "PoolOperationFailed" },
+    609: { message: "TokenTransferFailed" },
+    610: { message: "PositionAlreadyFilled" },
+    611: { message: "PositionNotFilled" },
+    10: { message: "InvalidInput" }
+};
+export class Client extends ContractClient {
+    options;
+    constructor(options) {
+        super(new ContractSpec(["AAAAAAAAAAAAAAAKaW5pdGlhbGl6ZQAAAAAABAAAAAAAAAANcG9vbF9jb250cmFjdAAAAAAAABMAAAAAAAAABm9yYWNsZQAAAAAAEwAAAAAAAAAHdG9rZW5fYQAAAAATAAAAAAAAAAd0b2tlbl9iAAAAABMAAAAA",
+            "AAAAAAAAAAAAAAANb3Blbl9wb3NpdGlvbgAAAAAAAAQAAAAAAAAABHVzZXIAAAATAAAAAAAAAAVpbnB1dAAAAAAAAAsAAAAAAAAABHNpemUAAAAEAAAAAAAAAAV0b2tlbgAAAAAAABMAAAAA",
+            "AAAAAAAAAAAAAAATb3Blbl9saW1pdF9wb3NpdGlvbgAAAAAFAAAAAAAAAAR1c2VyAAAAEwAAAAAAAAAFaW5wdXQAAAAAAAALAAAAAAAAAARzaXplAAAABAAAAAAAAAAFdG9rZW4AAAAAAAATAAAAAAAAAAtlbnRyeV9wcmljZQAAAAALAAAAAA==",
+            "AAAAAAAAAAAAAAANYWRkX3N0b3BfbG9zcwAAAAAAAAIAAAAAAAAABHVzZXIAAAATAAAAAAAAAAlzdG9wX2xvc3MAAAAAAAALAAAAAA==",
+            "AAAAAAAAAAAAAAAPYWRkX3Rha2VfcHJvZml0AAAAAAIAAAAAAAAABHVzZXIAAAATAAAAAAAAAAt0YWtlX3Byb2ZpdAAAAAALAAAAAA==",
+            "AAAAAAAAAAAAAAANZmlsbF9wb3NpdGlvbgAAAAAAAAIAAAAAAAAABHVzZXIAAAATAAAAAAAAAAlmZWVfdGFrZXIAAAAAAAATAAAAAA==",
+            "AAAAAAAAAAAAAAAOY2xvc2VfcG9zaXRpb24AAAAAAAEAAAAAAAAABHVzZXIAAAATAAAAAA==",
+            "AAAAAAAAAAAAAAAJbGlxdWlkYXRlAAAAAAAAAgAAAAAAAAAEdXNlcgAAABMAAAAAAAAACmxpcXVpZGF0b3IAAAAAABMAAAAA",
+            "AAAAAAAAAAAAAAAMZ2V0X3Bvc2l0aW9uAAAAAQAAAAAAAAAEdXNlcgAAABMAAAABAAAH0AAAAAhQb3NpdGlvbg==",
+            "AAAAAgAAAAAAAAAAAAAAB0RhdGFLZXkAAAAABQAAAAAAAAAAAAAABk9yYWNsZQAAAAAAAAAAAAAAAAAMUG9vbENvbnRyYWN0AAAAAAAAAAAAAAAGVG9rZW5BAAAAAAAAAAAAAAAAAAZUb2tlbkIAAAAAAAEAAAAAAAAACFBvc2l0aW9uAAAAAQAAABM=",
+            "AAAAAQAAAAAAAAAAAAAACFBvc2l0aW9uAAAACQAAAAAAAAAIYm9ycm93ZWQAAAALAAAAAAAAAApjb2xsYXRlcmFsAAAAAAALAAAAAAAAAAtlbnRyeV9wcmljZQAAAAALAAAAAAAAAAZmaWxsZWQAAAAAAAEAAAAAAAAACGxldmVyYWdlAAAABAAAAAAAAAAJc3RvcF9sb3NzAAAAAAAACwAAAAAAAAALdGFrZV9wcm9maXQAAAAACwAAAAAAAAAJdGltZXN0YW1wAAAAAAAABgAAAAAAAAAFdG9rZW4AAAAAAAAT",
+            "AAAABAAAAAAAAAAAAAAAFFBvc2l0aW9uTWFuYWdlckVycm9yAAAACwAAAAAAAAASQWxyZWFkeUluaXRpYWxpemVkAAAAAAJZAAAAAAAAABVQb3NpdGlvbkFscmVhZHlFeGlzdHMAAAAAAAJaAAAAAAAAABBOb1Bvc2l0aW9uRXhpc3RzAAACWwAAAAAAAAAOU3RhbGVQcmljZURhdGEAAAAAAlwAAAAAAAAAF1Bvc2l0aW9uTm90TGlxdWlkYXRhYmxlAAAAAl0AAAAAAAAADU92ZXJmbG93RXJyb3IAAAAAAAJfAAAAAAAAABNQb29sT3BlcmF0aW9uRmFpbGVkAAAAAmAAAAAAAAAAE1Rva2VuVHJhbnNmZXJGYWlsZWQAAAACYQAAAAAAAAAVUG9zaXRpb25BbHJlYWR5RmlsbGVkAAAAAAACYgAAAAAAAAARUG9zaXRpb25Ob3RGaWxsZWQAAAAAAAJjAAAAAAAAAAxJbnZhbGlkSW5wdXQAAAAK",
+            "AAAAAQAAAC9QcmljZSBkYXRhIGZvciBhbiBhc3NldCBhdCBhIHNwZWNpZmljIHRpbWVzdGFtcAAAAAAAAAAACVByaWNlRGF0YQAAAAAAAAIAAAAAAAAABXByaWNlAAAAAAAACwAAAAAAAAAJdGltZXN0YW1wAAAAAAAABg==",
+            "AAAAAgAAAApBc3NldCB0eXBlAAAAAAAAAAAABUFzc2V0AAAAAAAAAgAAAAEAAAAAAAAAB1N0ZWxsYXIAAAAAAQAAABMAAAABAAAAAAAAAAVPdGhlcgAAAAAAAAEAAAAR"]), options);
+        this.options = options;
+    }
+    fromJSON = {
+        initialize: (this.txFromJSON),
+        open_position: (this.txFromJSON),
+        open_limit_position: (this.txFromJSON),
+        add_stop_loss: (this.txFromJSON),
+        add_take_profit: (this.txFromJSON),
+        fill_position: (this.txFromJSON),
+        close_position: (this.txFromJSON),
+        liquidate: (this.txFromJSON),
+        get_position: (this.txFromJSON)
+    };
+}
