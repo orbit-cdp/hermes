@@ -1,7 +1,7 @@
 use soroban_sdk::{testutils::Address as _, Address, Env};
 
 mod pool_contract {
-    soroban_sdk::contractimport!(file = "../wasms/pool.wasm");
+    soroban_sdk::contractimport!(file = "../wasms2/pool.wasm");
 }
 
 pub use pool_contract::{Client as PoolClient, TokenInfo, WASM as POOL_WASM};

@@ -157,6 +157,12 @@ fn testing() {
     assert_eq!(position.collateral, 999 * SCALAR_7);
 
     fixture.position_manager.close_position(&ben);
+    let balance = fixture.tokens[TokenIndex::XLM].balance(&ben);
+    assert_eq!(balance, 99_980_010_000);
 
     println!("Balance of ben {:?}", fixture.tokens[TokenIndex::XLM].balance(&ben));
+
+
 }
+
+

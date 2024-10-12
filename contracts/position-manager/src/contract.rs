@@ -145,12 +145,17 @@ impl PositionManager for PositionManagerContract {
         let other_token = if token == token_a { token_b } else { token_a };
         let oracle = storage::get_oracle(&env);
 
+
         let token_price = oracle::load_price(&env, oracle.clone(), token.clone());
         let other_token_price = oracle::load_price(&env, oracle.clone(), other_token.clone());
         let current_price = token_price.fixed_div_floor(&env, &other_token_price, &SCALAR_7);
 
-        let to_repay = borrowed_value.fixed_div_floor(&env, &current_price, &SCALAR_7);
+        let mut to_repay = borrowed_value.fixed_div_floor(&env, &current_price, &SCALAR_7);
 
+        let mut to_repay_user = total_position - to_repay;
+        let fee = to_repay_user.fixed_mul_ceil(&env, &10000, &SCALAR_7);
+        to_repay_user -= fee;
+        to_repay += fee;
         //TODO: Check if position is not negative
 
         // Repay the borrowed amount
@@ -180,7 +185,6 @@ impl PositionManager for PositionManagerContract {
         //
 
         // Transfer rest of position back
-        let to_repay_user = total_position - to_repay;
         token_client.transfer(&env.current_contract_address(), &user, &to_repay_user);
 
         storage::remove_position(&env, &user);
