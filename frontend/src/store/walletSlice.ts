@@ -243,6 +243,67 @@ export const closePosition = createAsyncThunk(
   }
 );
 
+export const setStopLoss = createAsyncThunk(
+  'wallet/setStopLoss',
+  async ({ userId, stopLoss }: { userId: string; stopLoss: number }, { getState, dispatch }) => {
+    try {
+      const state = getState() as RootState;
+      const { contractId, keyId } = state.wallet;
+
+      if (!contractId || !keyId) {
+        throw new Error('Wallet not connected');
+      }
+
+      const { built } = await positionManager.add_stop_loss({
+        user: contractId,
+        stop_loss: BigInt(Math.floor(stopLoss * SCALAR_7)),
+      });
+
+      const xdr = await account.sign(built!, { keyId: keyId });
+      await server.send(xdr.built!);
+
+      // Fetch the updated position to ensure consistency
+      return dispatch(fetchPosition(userId)).unwrap();
+    } catch (error) {
+      console.error('Failed to set stop loss:', error);
+      dispatch(fetchPosition(userId));
+      throw error;
+    }
+  }
+);
+
+export const setTakeProfit = createAsyncThunk(
+  'wallet/setTakeProfit',
+  async (
+    { userId, takeProfit }: { userId: string; takeProfit: number },
+    { getState, dispatch }
+  ) => {
+    try {
+      const state = getState() as RootState;
+      const { contractId, keyId } = state.wallet;
+
+      if (!contractId || !keyId) {
+        throw new Error('Wallet not connected');
+      }
+
+      const { built } = await positionManager.add_take_profit({
+        user: contractId,
+        take_profit: BigInt(Math.floor(takeProfit * SCALAR_7)),
+      });
+
+      const xdr = await account.sign(built!, { keyId: keyId });
+      await server.send(xdr.built!);
+
+      // Fetch the updated position to ensure consistency
+      return dispatch(fetchPosition(userId)).unwrap();
+    } catch (error) {
+      console.error('Failed to set take profit:', error);
+      dispatch(fetchPosition(userId));
+      throw error;
+    }
+  }
+);
+
 export const closeAllPositions = createAsyncThunk(
   'wallet/closeAllPositions',
   async (userId: string, { getState, rejectWithValue }) => {
@@ -414,6 +475,24 @@ const walletSlice = createSlice({
         state.isPositionOperationInProgress = false;
       })
       .addCase(closePosition.rejected, (state) => {
+        state.isPositionOperationInProgress = false;
+      })
+      .addCase(setStopLoss.pending, (state) => {
+        state.isPositionOperationInProgress = true;
+      })
+      .addCase(setStopLoss.fulfilled, (state) => {
+        state.isPositionOperationInProgress = false;
+      })
+      .addCase(setStopLoss.rejected, (state) => {
+        state.isPositionOperationInProgress = false;
+      })
+      .addCase(setTakeProfit.pending, (state) => {
+        state.isPositionOperationInProgress = true;
+      })
+      .addCase(setTakeProfit.fulfilled, (state) => {
+        state.isPositionOperationInProgress = false;
+      })
+      .addCase(setTakeProfit.rejected, (state) => {
         state.isPositionOperationInProgress = false;
       });
   },

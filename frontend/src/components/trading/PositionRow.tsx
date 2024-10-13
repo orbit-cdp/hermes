@@ -1,11 +1,19 @@
 import React, { useState } from 'react';
-import { TableRow, TableCell, Typography, Button, Box } from '@mui/material';
+import {
+  TableRow,
+  TableCell,
+  Typography,
+  Button,
+  Box,
+  InputAdornment,
+  TextField,
+} from '@mui/material';
 import Image from 'next/image';
 import { Position } from '../../../packages/position-manager-sdk/dist';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../../store/store';
 import { selectTokenData } from '../../store/perpsSlice';
-import { closePosition } from '../../store/walletSlice';
+import { closePosition, setStopLoss, setTakeProfit } from '../../store/walletSlice';
 import { TOKENS } from '../../constants/tokens';
 
 interface PositionRowProps {
@@ -78,6 +86,39 @@ const PositionRow: React.FC<PositionRowProps> = ({ position, onClosePosition }) 
   const sizeInUSD = position.token === TOKENS.XLM ? size * xlmPrice : size;
   const collateralInUSD = position.token === TOKENS.XLM ? collateral * xlmPrice : collateral;
 
+  const handleSetTakeProfit = async () => {
+    if (contractId) {
+      try {
+        const takeProfitValue = parseFloat(takeProfitPrice);
+        if (isNaN(takeProfitValue)) {
+          console.error('Invalid take profit price');
+          return;
+        }
+        await dispatch(setTakeProfit({ userId: contractId, takeProfit: takeProfitValue })).unwrap();
+        setShowTakeProfitInput(false);
+        setTakeProfitPrice('');
+      } catch (error) {
+        console.error('Failed to set take profit:', error);
+      }
+    }
+  };
+
+  const handleSetStopLoss = async () => {
+    if (contractId) {
+      try {
+        const stopLossValue = parseFloat(stopLossPrice);
+        if (isNaN(stopLossValue)) {
+          console.error('Invalid stop loss price');
+          return;
+        }
+        await dispatch(setStopLoss({ userId: contractId, stopLoss: stopLossValue })).unwrap();
+        setShowStopLossInput(false);
+        setStopLossPrice('');
+      } catch (error) {
+        console.error('Failed to set stop loss:', error);
+      }
+    }
+  };
   const handleClosePosition = async () => {
     if (contractId) {
       try {
@@ -137,34 +178,68 @@ const PositionRow: React.FC<PositionRowProps> = ({ position, onClosePosition }) 
       </TableCell>
       <TableCell>
         {showTakeProfitInput ? (
-          <Box>
-            <input
+          <Box display="flex" alignItems="center" gap={1}>
+            <TextField
               type="number"
               value={takeProfitPrice}
               onChange={(e) => setTakeProfitPrice(e.target.value)}
               placeholder="Price"
+              size="small"
+              InputProps={{
+                endAdornment: <InputAdornment position="end">XLM</InputAdornment>,
+              }}
+              sx={{ width: '120px' }}
             />
-            <Button>Set</Button>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={handleSetTakeProfit}
+              disabled={isPositionOperationInProgress}
+            >
+              Set
+            </Button>
           </Box>
         ) : (
-          <Button variant="outlined" size="small" onClick={() => setShowTakeProfitInput(true)}>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => setShowTakeProfitInput(true)}
+            disabled={isPositionOperationInProgress}
+          >
             Add TP
           </Button>
         )}
       </TableCell>
       <TableCell>
         {showStopLossInput ? (
-          <Box>
-            <input
+          <Box display="flex" alignItems="center" gap={1}>
+            <TextField
               type="number"
               value={stopLossPrice}
               onChange={(e) => setStopLossPrice(e.target.value)}
               placeholder="Price"
+              size="small"
+              InputProps={{
+                endAdornment: <InputAdornment position="end">XLM</InputAdornment>,
+              }}
+              sx={{ width: '120px' }}
             />
-            <Button>Set</Button>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={handleSetStopLoss}
+              disabled={isPositionOperationInProgress}
+            >
+              Set
+            </Button>
           </Box>
         ) : (
-          <Button variant="outlined" size="small" onClick={() => setShowStopLossInput(true)}>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => setShowStopLossInput(true)}
+            disabled={isPositionOperationInProgress}
+          >
             Add SL
           </Button>
         )}

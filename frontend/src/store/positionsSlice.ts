@@ -152,6 +152,7 @@ export const { setPosition } = positionsSlice.actions;
 
 export const selectPosition = (state: RootState, userId: string): Position | null | undefined => {
   const serializablePosition = state.positions.positions[userId];
+  console.log('pos', serializablePosition);
   if (serializablePosition === null) {
     return null; // Explicitly no position
   }

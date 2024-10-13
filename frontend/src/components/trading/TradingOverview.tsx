@@ -49,6 +49,8 @@ const TradingOverview: React.FC = () => {
     contractId ? selectPosition(state, contractId) : undefined
   );
 
+  console.log(position);
+
   const xlmTokenData = useSelector((state: RootState) => state.perps.tokens['XLM']);
 
   useEffect(() => {

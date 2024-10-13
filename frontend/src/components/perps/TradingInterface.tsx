@@ -143,7 +143,7 @@ const TradingInterface: React.FC<TradingInterfaceProps> = React.memo(
       } else {
         setFees(null);
       }
-    }, [contractId, payingAmount, selectedToken, leverage, dispatch]);
+    }, [contractId, payingAmount, selectedToken, dispatch]);
 
     useEffect(() => {
       calculateAndSetFees();
