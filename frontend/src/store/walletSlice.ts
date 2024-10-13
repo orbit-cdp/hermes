@@ -14,7 +14,7 @@ import {
   server,
 } from '../lib/passkey';
 import { fetchPosition, setPosition } from './positionsSlice';
-import { Position } from 'position-manager-sdk';
+import { Position } from '../../packages/position-manager-sdk/dist';
 
 const SCALAR_7 = 10_000_000;
 
@@ -46,8 +46,8 @@ const initialState: WalletState = {
 export const registerWallet = createAsyncThunk(
   'wallet/register',
   async (passkeyName: string, { dispatch }) => {
-    console.log("Test");
-    const { keyId: kid, contractId: cid, built} = await account.createWallet('Perps', passkeyName);
+    console.log('Test');
+    const { keyId: kid, contractId: cid, built } = await account.createWallet('Perps', passkeyName);
     if (built) {
       await server.send(built);
     }
@@ -59,7 +59,8 @@ export const registerWallet = createAsyncThunk(
     dispatch(setKeyId(newKeyId));
     dispatch(setContractId(cid));
     dispatch(setConnected(true));
-    //await dispatch(fundWallet());
+    const result = await dispatch(fundWallet());
+    console.log('FUNDING RESULT', result);
   }
 );
 
@@ -83,6 +84,8 @@ export const connectWallet = createAsyncThunk(
       dispatch(setKeyId(newKeyId));
       dispatch(setContractId(cid));
       dispatch(setConnected(true));
+      const result = await dispatch(fundWallet());
+      console.log('FUNDING RESULT', result);
       await dispatch(getWalletBalance());
 
       return { keyId: newKeyId, contractId: cid };
@@ -107,6 +110,12 @@ export const openPosition = createAsyncThunk(
     try {
       const state = getState() as RootState;
       const { contractId, keyId } = state.wallet;
+      console.log({
+        user: contractId!,
+        input: BigInt(amount * SCALAR_7),
+        size: BigInt(size * SCALAR_7),
+        token,
+      });
       const { built } = await positionManager.open_position({
         user: contractId!,
         input: BigInt(amount * SCALAR_7),
@@ -123,6 +132,83 @@ export const openPosition = createAsyncThunk(
       return dispatch(fetchPosition(userId)).unwrap();
     } catch (error) {
       console.error('Failed to open position:', error);
+      // If there's an error, we need to fetch the position again to ensure the UI is in sync
+      dispatch(fetchPosition(userId));
+      throw error;
+    }
+  }
+);
+
+export const calculateFees = createAsyncThunk(
+  'wallet/calculateFees',
+  async (
+    {
+      userId,
+      token,
+      amount,
+      size,
+    }: { userId: string; token: string; amount: number; size: number },
+    { dispatch, getState }
+  ) => {
+    try {
+      const state = getState() as RootState;
+      const { contractId, keyId } = state.wallet;
+      console.log('input', {
+        user: contractId!,
+        input: BigInt(amount * SCALAR_7),
+        size: size * SCALAR_7,
+        token,
+      });
+      const { built } = await positionManager.open_position({
+        user: contractId!,
+        input: BigInt(amount * SCALAR_7),
+        size: size * SCALAR_7,
+        token,
+      });
+      console.log(built);
+      console.log(built.fee);
+      return built.fee;
+    } catch (error) {
+      console.error('Failed to open position:', error);
+      // If there's an error, we need to fetch the position again to ensure the UI is in sync
+      dispatch(fetchPosition(userId));
+      throw error;
+    }
+  }
+);
+
+export const openLimitPosition = createAsyncThunk(
+  'wallet/openLimitPosition',
+  async (
+    {
+      userId,
+      token,
+      amount,
+      size,
+      entryPrice,
+    }: { userId: string; token: string; amount: number; size: number; entryPrice: number },
+    { dispatch, getState }
+  ) => {
+    try {
+      const state = getState() as RootState;
+      const { contractId, keyId } = state.wallet;
+      const { built } = await positionManager.open_limit_position({
+        user: contractId!,
+        input: BigInt(amount * SCALAR_7),
+        size: size * SCALAR_7,
+        token,
+        entry_price: entryPrice * SCALAR_7,
+      });
+
+      const xdr = await account.sign(built!, { keyId: keyId! });
+
+      // Send the transaction
+      await server.send(xdr.built!);
+
+      // Fetch the actual position to ensure consistency
+      return dispatch(fetchPosition(userId)).unwrap();
+    } catch (error) {
+      console.error('Failed to open limit position:', error);
       // If there's an error, we need to fetch the position again to ensure the UI is in sync
       dispatch(fetchPosition(userId));
       throw error;

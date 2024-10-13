@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { TableRow, TableCell, Typography, Button, Box } from '@mui/material';
 import Image from 'next/image';
-import { Position } from 'position-manager-sdk';
+import { Position } from '../../../packages/position-manager-sdk/dist';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../../store/store';
 import { selectTokenData } from '../../store/perpsSlice';
@@ -53,19 +53,22 @@ const PositionRow: React.FC<PositionRowProps> = ({ position, onClosePosition }) 
   // Always calculate prices in XLM terms
   const xlmEntryPrice = position.token === TOKENS.XLM ? entryPrice : 1 / entryPrice;
   const xlmMarkPrice = position.token === TOKENS.XLM ? markPrice : 1 / markPrice;
-  const xlmLiquidationPrice = position.token === TOKENS.XLM 
-    ? entryPrice * (1 - collateral / (collateral + size))
-    : 1 / (entryPrice * (1 - collateral / (collateral + size)));
+  const xlmLiquidationPrice =
+    position.token === TOKENS.XLM
+      ? entryPrice * (1 - collateral / (collateral + size))
+      : 1 / (entryPrice * (1 - collateral / (collateral + size)));
 
   const leverage = size / collateral;
-  
-  const pnl = position.token === TOKENS.XLM ? 
-    size * (markPrice - entryPrice) : 
-    size * (1/entryPrice - 1/markPrice);
 
-  const pnlPercentage = position.token === TOKENS.XLM ?
-    ((markPrice - entryPrice) / entryPrice) * 100 :
-    ((1/markPrice - 1/entryPrice) / (1/entryPrice)) * 100;
+  const pnl =
+    position.token === TOKENS.XLM
+      ? size * (markPrice - entryPrice)
+      : size * (1 / entryPrice - 1 / markPrice);
+
+  const pnlPercentage =
+    position.token === TOKENS.XLM
+      ? ((markPrice - entryPrice) / entryPrice) * 100
+      : ((1 / markPrice - 1 / entryPrice) / (1 / entryPrice)) * 100;
 
   const value = position.token === TOKENS.XLM ? size * markPrice : size;
 
@@ -90,13 +93,13 @@ const PositionRow: React.FC<PositionRowProps> = ({ position, onClosePosition }) 
       <TableCell>
         <Box display="flex" alignItems="center" gap={1}>
           <Image
-            src={`/icons/tokens/${position.token == TOKENS.XLM ? "xlm" : "ousd"}.svg`}
+            src={`/icons/tokens/${position.token == TOKENS.XLM ? 'xlm' : 'ousd'}.svg`}
             alt="XLM"
             width={24}
             height={24}
             style={{ borderRadius: '50%' }}
           />
-          <Typography color="white">{position.token == TOKENS.XLM ? "XLM" : "oUSD"}</Typography>
+          <Typography color="white">{position.token == TOKENS.XLM ? 'XLM' : 'oUSD'}</Typography>
         </Box>
       </TableCell>
       <TableCell>

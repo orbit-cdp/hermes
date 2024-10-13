@@ -34,6 +34,10 @@ const TradeDetails: React.FC<TradeDetailsProps> = ({
       <FlexBox direction="column" gap={1}>
         <DetailRow label="Entry price" value={entryPrice} />
         <DetailRow label="Liquidation price" value={liquidationPrice} />
+        <DetailRow label="Open fee" value={`${openFee} (${openFeePercentage})`} />
+        <DetailRow label="Price impact" value={priceImpact} />
+        <DetailRow label="Borrow rate" value={borrowRate} />
+        <DetailRow label="Available liquidity" value={availableLiquidity} />
       </FlexBox>
     </Section>
   );

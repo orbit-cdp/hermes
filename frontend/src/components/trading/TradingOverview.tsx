@@ -20,7 +20,7 @@ import {
   startPeriodicPositionRefresh,
 } from '../../store/positionsSlice';
 import { closeAllPositions, closePosition } from '../../store/walletSlice';
-import { Position } from 'position-manager-sdk';
+import { Position } from '../../../packages/position-manager-sdk/dist';
 import PositionRow from './PositionRow'; // We'll create this component next
 
 const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
@@ -48,7 +48,7 @@ const TradingOverview: React.FC = () => {
   const position = useSelector((state: RootState) =>
     contractId ? selectPosition(state, contractId) : undefined
   );
-  
+
   const xlmTokenData = useSelector((state: RootState) => state.perps.tokens['XLM']);
 
   useEffect(() => {

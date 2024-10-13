@@ -2,7 +2,7 @@ import { PasskeyKit, PasskeyServer, SACClient } from 'passkey-kit';
 import { Account, Keypair, SorobanRpc, StrKey } from '@stellar/stellar-sdk';
 import { Buffer } from 'buffer';
 import { Client as PoolClient } from 'pool-sdk';
-import { Client as PositionManagerClient } from 'position-manager-sdk';
+import { Client as PositionManagerClient } from '../../packages/position-manager-sdk/dist';
 import { Client as OracleClient } from 'mock-oracle-bindings';
 import { toast } from 'react-toastify';
 import { fetchTokenData } from '../store/perpsSlice';
@@ -42,7 +42,8 @@ export const account = new PasskeyKit({
 export const server = new PasskeyServer({
   rpcUrl: 'https://soroban-testnet.stellar.org',
   launchtubeUrl: 'https://testnet.launchtube.xyz',
-  launchtubeJwt: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxYzUxMDdmZjU4MzM4MDFkMDBmNmZhMjI3NzAzODY0NzNhMjY1ZmM5ZDhlZTVjMGYwN2U0NGIzYTRmNzAzMjU5IiwiZXhwIjoxNzMwNTQzNjQ5LCJjcmVkaXRzIjoxMDAwMDAwMDAwLCJpYXQiOjE3MjMyODYwNDl9.GwJfFIQ9q8m0qYusqHZQCNhJGf7ktB3o18Oq5Q3u9hI',
+  launchtubeJwt:
+    'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxYzUxMDdmZjU4MzM4MDFkMDBmNmZhMjI3NzAzODY0NzNhMjY1ZmM5ZDhlZTVjMGYwN2U0NGIzYTRmNzAzMjU5IiwiZXhwIjoxNzMwNTQzNjQ5LCJjcmVkaXRzIjoxMDAwMDAwMDAwLCJpYXQiOjE3MjMyODYwNDl9.GwJfFIQ9q8m0qYusqHZQCNhJGf7ktB3o18Oq5Q3u9hI',
 });
 
 export const sac = new SACClient({
@@ -142,5 +143,3 @@ export const oracle = new OracleClient({
   networkPassphrase: 'Test SDF Network ; September 2015',
   rpcUrl: 'https://soroban-testnet.stellar.org',
 });
-
-

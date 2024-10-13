@@ -1,20 +1,24 @@
-// positionsSlice.ts
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { RootState, AppDispatch } from './store';
 import { positionManager } from '../lib/passkey';
-import { Position } from 'position-manager-sdk';
+import { Position } from '../../packages/position-manager-sdk/dist';
+// import type { u32, u64, i128 } from '@stellar/stellar-sdk/contract';
 
 // Helper function to convert BigInt to string for serialization
 const serializeBigInt = (value: bigint | number): string => value.toString();
 
-// Helper function to parse string back to number
-const parseNumber = (value: string): number => Number(value);
+// Helper function to parse string back to BigInt
+const parseBigInt = (value: string): bigint => BigInt(value);
 
 // Serializable version of the Position type
 interface SerializablePosition {
   borrowed: string;
   collateral: string;
   entry_price: string;
+  filled: boolean;
+  leverage: number;
+  stop_loss: string;
+  take_profit: string;
   timestamp: string;
   token: string;
 }
@@ -40,16 +44,24 @@ const toSerializablePosition = (position: Position): SerializablePosition => ({
   borrowed: serializeBigInt(position.borrowed),
   collateral: serializeBigInt(position.collateral),
   entry_price: serializeBigInt(position.entry_price),
+  filled: position.filled,
+  leverage: Number(position.leverage),
+  stop_loss: serializeBigInt(position.stop_loss),
+  take_profit: serializeBigInt(position.take_profit),
   timestamp: serializeBigInt(position.timestamp),
   token: position.token,
 });
 
-// Convert SerializablePosition back to Position (for type consistency in components)
+// Convert SerializablePosition back to Position
 export const toPosition = (position: SerializablePosition): Position => ({
-  borrowed: BigInt(position.borrowed),
-  collateral: BigInt(position.collateral),
-  entry_price: BigInt(position.entry_price),
-  timestamp: BigInt(position.timestamp),
+  borrowed: parseBigInt(position.borrowed),
+  collateral: parseBigInt(position.collateral),
+  entry_price: parseBigInt(position.entry_price),
+  filled: position.filled,
+  leverage: position.leverage,
+  stop_loss: parseBigInt(position.stop_loss),
+  take_profit: parseBigInt(position.take_profit),
+  timestamp: parseBigInt(position.timestamp),
   token: position.token,
 });
 
@@ -57,14 +69,10 @@ export const fetchPosition = createAsyncThunk(
   'positions/fetchPosition',
   async (userId: string, { rejectWithValue }) => {
     try {
-      const { result } = await positionManager.get_position({ user: userId });
+      const result = await positionManager.get_position({ user: userId });
 
       // Check if the result indicates no active position
-      if (
-        !result ||
-        result.error ||
-        (typeof result === 'object' && Object.keys(result).length === 0)
-      ) {
+      if (!result) {
         return { userId, noActivePosition: true };
       }
 

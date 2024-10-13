@@ -72,6 +72,7 @@ const WalletBanner: React.FC = () => {
           await dispatch(registerWallet(passkeyName)).unwrap();
         } else {
           await dispatch(connectWallet({})).unwrap();
+          await dispatch(fundWallet());
         }
         setDialogOpen(false);
         setIsRegistering(false);

@@ -40,7 +40,7 @@ const LeverageControl: React.FC<LeverageControlProps> = ({ leverage, setLeverage
       />
       <Button
         sx={{ position: 'absolute', right: '8px', color: 'white' }}
-        onClick={() => setLeverage((prev) => Math.min(100, prev + 0.1))}
+        onClick={() => setLeverage((prev) => Math.min(1.1, prev + 0.1))}
       >
         +
       </Button>
