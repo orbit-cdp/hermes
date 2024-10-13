@@ -28,7 +28,7 @@ pub trait PositionManager {
     /// * `collateral` - The amount of collateral to deposit
     /// * `size` - The size of the position
     /// * `token` - The address of the token to borrow
-    fn open_position(env: Env, user: Address, collateral: i128, size: u32, token: Address);
+    fn open_position(env: Env, user: Address, collateral: i128, size: u32, token: Address) -> i128;
 
     /// Open a new limit position for a user
     ///
@@ -38,7 +38,7 @@ pub trait PositionManager {
     /// * `size` - The size of the position
     /// * `token` - The address of the token to borrow
     /// * `entry_price` - The price at which the position should be opened
-    fn open_limit_position(env: Env, user: Address, collateral: i128, size: u32, token: Address, entry_price: i128);
+    fn open_limit_position(env: Env, user: Address, collateral: i128, size: u32, token: Address, entry_price: i128) -> i128;
 
     fn fill_position(env: Env, user: Address, fee_taker: Address);
 
@@ -50,7 +50,7 @@ pub trait PositionManager {
     ///
     /// # Arguments
     /// * `user` - The address of the user closing the position
-    fn close_position(env: Env, user: Address);
+    fn close_position(env: Env, user: Address) -> (i128, i128);
 
     /// Liquidates a user's position if it meets liquidation criteria
     ///
@@ -87,7 +87,7 @@ impl PositionManager for PositionManagerContract {
         storage::set_pool_contract(&env, &pool_contract);
     }
 
-    fn open_position(env: Env, user: Address, input: i128, size: u32, token: Address) {
+    fn open_position(env: Env, user: Address, input: i128, size: u32, token: Address) -> i128 {
         storage::extend_instance(&env);
 
         //User must authenticate the opening of a position
@@ -144,9 +144,10 @@ impl PositionManager for PositionManagerContract {
         pool_client.borrow(&token, &to_borrow, &fee);
 
         storage::set_position(&env, &user, &position);
+        fee
     }
 
-    fn open_limit_position(env: Env, user: Address, input: i128, size: u32, token: Address, entry_price: i128) {
+    fn open_limit_position(env: Env, user: Address, input: i128, size: u32, token: Address, entry_price: i128) -> i128 {
         storage::extend_instance(&env);
 
         //User must authenticate the opening of a position
@@ -175,6 +176,7 @@ impl PositionManager for PositionManagerContract {
         token_client.transfer(&user, &env.current_contract_address(), &(input + fee));
 
         storage::set_position(&env, &user, &position);
+        fee
     }
 
     fn add_stop_loss(env: Env, user: Address, stop_loss: i128) {
@@ -273,7 +275,7 @@ impl PositionManager for PositionManagerContract {
         }
     }
 
-    fn close_position(env: Env, user: Address) {
+    fn close_position(env: Env, user: Address) -> (i128, i128) {
         storage::extend_instance(&env);
 
         user.require_auth();
@@ -289,6 +291,7 @@ impl PositionManager for PositionManagerContract {
         let to_repay_user = total_position - to_repay - fee;
 
         position::repay(&env, position.token.clone(), user, to_repay_user, to_repay, fee);
+        (to_repay_user, fee)
     }
 
     fn liquidate(env: Env, user: Address, liquidator: Address) {

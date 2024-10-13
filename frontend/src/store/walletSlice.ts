@@ -11,6 +11,7 @@ import {
   positionManager,
   pool,
   send_transaction,
+  server,
 } from '../lib/passkey';
 import { fetchPosition, setPosition } from './positionsSlice';
 import { Position } from 'position-manager-sdk';
@@ -45,9 +46,10 @@ const initialState: WalletState = {
 export const registerWallet = createAsyncThunk(
   'wallet/register',
   async (passkeyName: string, { dispatch }) => {
-    const { keyId: kid, contractId: cid, xdr } = await account.createWallet('Perps', passkeyName);
-    if (xdr) {
-      await send_transaction(xdr);
+    console.log("Test");
+    const { keyId: kid, contractId: cid, built} = await account.createWallet('Perps', passkeyName);
+    if (built) {
+      await server.send(built);
     }
 
     const newKeyId = base64url(kid);
@@ -57,7 +59,7 @@ export const registerWallet = createAsyncThunk(
     dispatch(setKeyId(newKeyId));
     dispatch(setContractId(cid));
     dispatch(setConnected(true));
-    await dispatch(fundWallet());
+    //await dispatch(fundWallet());
   }
 );
 
@@ -115,7 +117,7 @@ export const openPosition = createAsyncThunk(
       const xdr = await account.sign(built!, { keyId: keyId! });
 
       // Send the transaction
-      await send_transaction(xdr);
+      await server.send(xdr.built!);
 
       // Fetch the actual position to ensure consistency
       return dispatch(fetchPosition(userId)).unwrap();
@@ -142,7 +144,7 @@ export const closePosition = createAsyncThunk(
       const xdr = await account.sign(built!, { keyId: keyId! });
 
       // Send the transaction
-      await send_transaction(xdr);
+      await server.send(xdr.built!);
 
       // Fetch the updated position to ensure consistency
       return dispatch(fetchPosition(userId)).unwrap();
@@ -166,7 +168,7 @@ export const closeAllPositions = createAsyncThunk(
 
       const { built } = await positionManager.close_position({ user: contractId! });
       const xdr = await account.sign(built!, { keyId: keyId! });
-      await send_transaction(xdr);
+      await server.send(xdr.built!);
 
       // Fetch and return the updated position (which should now be closed)
       return fetchPosition(userId);
@@ -216,7 +218,7 @@ export const fundWallet = createAsyncThunk('wallet/fund', async (_, { getState }
   });
 
   const xdr = built!.toXDR();
-  await send_transaction(xdr);
+  await server.send(xdr.built!);
 });
 
 export const depositSLP = createAsyncThunk(
@@ -239,7 +241,7 @@ export const depositSLP = createAsyncThunk(
     });
 
     const xdr = await account.sign(built!, { keyId: keyId });
-    await send_transaction(xdr);
+    await server.send(xdr.built!);
 
     // Update the wallet balance after deposit
     dispatch(getWalletBalance());
@@ -262,7 +264,7 @@ export const withdrawSLP = createAsyncThunk(
     });
 
     const xdr = await account.sign(built!, { keyId: keyId });
-    await send_transaction(xdr);
+    await server.send(xdr.built!);
 
     // Update the wallet balance after withdrawal
     dispatch(getWalletBalance());

@@ -57,7 +57,6 @@ export const fetchPosition = createAsyncThunk(
   'positions/fetchPosition',
   async (userId: string, { rejectWithValue }) => {
     try {
-      console.log(userId);
       const { result } = await positionManager.get_position({ user: userId });
 
       // Check if the result indicates no active position

@@ -33,7 +33,7 @@
     "dotenv-flow": "^4.1.0",
     "mock-oracle-bindings": "file:/packages/mock-oracle-bindings",
     "next": "^12.3.4",
-    "passkey-kit": "^0.5.3",
+    "passkey-kit": "^0.9.4",
     "pool-sdk": "file:/packages/pool-sdk",
     "position-manager-sdk": "file:/packages/position-manager-sdk",
     "react": "^18.2.0",
@@ -57,7 +57,7 @@
     "eslint-config-next": "^13.3.0",
     "prettier": "^2.7.1",
     "tslib": "^2.5.0",
-    "typescript": "^4.7.4"
+    "typescript": "^5.6.3"
   },
   "workspaces": [
     "packages/*"

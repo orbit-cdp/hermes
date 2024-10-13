@@ -73,7 +73,7 @@ export const fetchTokenData = createAsyncThunk(
         const client = symbol == 'USD' ? ousd : native;
 
         const balanceResult = await client.balance({
-          id: 'CDW2GCMKEB4XML7JKLNDWQ5TBRVAG5P4LZUCTT6AXV6WHAPAXIXJYZ3T',
+          id: 'CAZ4AQYC3W2CDEBA7RFVVFL53KKTQ6FZ6KS6SNX2L776J5LYYM2U32S2',
         });
         const balance = Number(balanceResult) / SCALAR_7;
 
